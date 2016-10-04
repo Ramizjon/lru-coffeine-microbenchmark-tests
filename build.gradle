@@ -1,0 +1,39 @@
+apply plugin: 'java'
+
+group = 'me.champeau.sample'
+version = '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+
+
+buildscript {
+   repositories {
+      jcenter()
+   }
+   dependencies {
+      classpath 'me.champeau.gradle:jmh-gradle-plugin:0.1'
+      classpath 'org.openjdk.jmh:jmh-generator-annprocess:1.14'
+   }
+}
+
+
+dependencies {
+    compile 'org.openjdk.jmh:jmh-core:1.14'
+    compile 'org.openjdk.jmh:jmh-generator-annprocess:1.14'
+    compile 'com.github.ben-manes.caffeine:caffeine:2.3.3'
+    compile 'org.apache.commons:commons-lang3:3.4'
+}
+
+
+repositories {
+   jcenter()
+}
+
+apply plugin: 'me.champeau.gradle.jmh'
+
+jmh {
+    include = 'org\\.openjdk\\.jmh\\.samples\\.JMHSample_01_HelloWorld.*'
+    humanOutputFile = null
+}
