@@ -16,54 +16,123 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
-
+@State(Scope.Thread)
 public class JMHCacheSample {
 
-    @Benchmark
-    @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void measureLRUCache(BenchmarkState state) throws InterruptedException {
-        LRUCache<String, String> cacheObject = new LRUCache<String, String>(state.maxEntries);
-        Random rand = new Random(state.RAND_SEED);
+    private static final int STRING_ARRAY_SIZE = 5000;
+    private static final int STRING_SIZE = 20;
+    private static final int RAND_SEED = 0;
+    int maxEntries = 80;
 
-        for (int i = 0; i < state.stringArray.length; i++) {
-            int index = rand.nextInt((state.stringArray.length - 0) + 1);
-            String keyValue = state.stringArray[index];
-            if (!cacheObject.containsKey(keyValue)) {
-                cacheObject.put(keyValue, keyValue);
+    LoadingCache<String, String> caffeineCache;
+    LRUCache<String, String> lruCache;
+    CacheLoader<String, String> loader;
+
+    String[] stringArrayHalfRepeated = generateStringsWithInit(2500);
+    String[] stringArrayEveryFiveRepeated = generateStringsWithInit(5);
+    String[] stringArrayNoRepeated = generateStringsWithInit(1);
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public List<String> measureLRUCacheHalfRepeated() throws InterruptedException {
+        Random rand = new Random(RAND_SEED);
+        List<String> resultList = new LinkedList<>();
+
+        for (int i = 0; i < stringArrayHalfRepeated.length; i++) {
+            int index = rand.nextInt((stringArrayHalfRepeated.length - 0) + 1);
+            String keyValue = stringArrayHalfRepeated[index];
+            if (!lruCache.containsKey(keyValue)) {
+                lruCache.put(keyValue, keyValue);
             }
-            cacheObject.get(keyValue);
+            resultList.add(lruCache.get(keyValue));
         }
+        return resultList;
     }
 
     @Benchmark
-    @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
+    @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void measureCaffeineCache(BenchmarkState state) throws InterruptedException {
-        Random rand = new Random(state.RAND_SEED);
+    public List<String> measureCaffeineCacheHalfRepeated() throws InterruptedException {
+        Random rand = new Random(RAND_SEED);
+        List<String> resultList = new LinkedList<>();
 
-        LoadingCache<String, String> caffeineCache = Caffeine
-                .newBuilder()
-                .maximumSize(Long.valueOf(state.maxEntries))
-                .initialCapacity(state.maxEntries)
-                .build(state.loader);
-
-        for (int i = 0; i < state.stringArray.length; i++) {
-            int index = rand.nextInt((state.stringArray.length - 0) + 1);
-            caffeineCache.get(state.stringArray[index]);
+        for (int i = 0; i < stringArrayHalfRepeated.length; i++) {
+            int index = rand.nextInt((stringArrayHalfRepeated.length - 0) + 1);
+            resultList.add(caffeineCache.get(stringArrayHalfRepeated[index]));
         }
+        return resultList;
     }
 
-    @State(Scope.Benchmark)
-    public static class BenchmarkState {
-        private static final int REPEATED_STRINGS = 5;
-        private static final int STRING_ARRAY_SIZE = 1000;
-        private static final int STRING_SIZE = 20;
-        private static final int RAND_SEED = 0;
-        int maxEntries = 100;
-        String[] stringArray = generateStringsWithInit();
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public List<String> measureLRUCacheEveryFiveRepeated() throws InterruptedException {
+        Random rand = new Random(RAND_SEED);
+        List<String> resultList = new LinkedList<>();
 
-        CacheLoader<String, String> loader = new CacheLoader<String, String>() {
+        for (int i = 0; i < stringArrayEveryFiveRepeated.length; i++) {
+            int index = rand.nextInt((stringArrayEveryFiveRepeated.length - 0) + 1);
+            String keyValue = stringArrayEveryFiveRepeated[index];
+            if (!lruCache.containsKey(keyValue)) {
+                lruCache.put(keyValue, keyValue);
+            }
+            resultList.add(lruCache.get(keyValue));
+        }
+        return resultList;
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public List<String> measureCaffeineCacheEveryFiveRepeated() throws InterruptedException {
+        Random rand = new Random(RAND_SEED);
+        List<String> resultList = new LinkedList<>();
+
+        for (int i = 0; i < stringArrayEveryFiveRepeated.length; i++) {
+            int index = rand.nextInt((stringArrayEveryFiveRepeated.length - 0) + 1);
+            resultList.add(caffeineCache.get(stringArrayEveryFiveRepeated[index]));
+        }
+        return resultList;
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public List<String> measureLRUCacheNoRepeated() throws InterruptedException {
+        Random rand = new Random(RAND_SEED);
+        List<String> resultList = new LinkedList<>();
+
+        for (int i = 0; i < stringArrayNoRepeated.length; i++) {
+            int index = rand.nextInt((stringArrayNoRepeated.length - 0) + 1);
+            String keyValue = stringArrayNoRepeated[index];
+            if (!lruCache.containsKey(keyValue)) {
+                lruCache.put(keyValue, keyValue);
+            }
+            resultList.add(lruCache.get(keyValue));
+        }
+        return resultList;
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public List<String> measureCaffeineCacheNoRepeated() throws InterruptedException {
+        Random rand = new Random(RAND_SEED);
+        List<String> resultList = new LinkedList<>();
+
+        for (int i = 0; i < stringArrayNoRepeated.length; i++) {
+            int index = rand.nextInt((stringArrayNoRepeated.length - 0) + 1);
+            resultList.add(caffeineCache.get(stringArrayNoRepeated[index]));
+        }
+        return resultList;
+    }
+
+    @Setup
+    public void prepare() {
+        lruCache = new LRUCache<String, String>(maxEntries);
+
+        loader = new CacheLoader<String, String>() {
             @Override
             public String load(String key) throws Exception {
                 return key;
@@ -82,19 +151,24 @@ public class JMHCacheSample {
                 }, executor);
             }
         };
+        caffeineCache = Caffeine
+                .newBuilder()
+                .maximumSize(Long.valueOf(maxEntries))
+                .initialCapacity(maxEntries)
+                .build(loader);
+    }
 
-        private static String[] generateStringsWithInit() {
-            List<String> stringList = new ArrayList<String>();
+    private static String[] generateStringsWithInit(int repeatedStrings) {
+        List<String> stringList = new ArrayList<String>();
 
-            for (int i = 0; i < STRING_ARRAY_SIZE / REPEATED_STRINGS; i++) {
-                String generated = RandomStringUtils.random(STRING_SIZE);
-                for (int k = 0; k < REPEATED_STRINGS; k++) {
-                    stringList.add(generated);
-                }
+        for (int i = 0; i < STRING_ARRAY_SIZE / repeatedStrings; i++) {
+            String generated = RandomStringUtils.random(STRING_SIZE);
+            for (int k = 0; k < repeatedStrings; k++) {
+                stringList.add(generated);
             }
-            Collections.shuffle(stringList, new Random(RAND_SEED));
-            return stringList.toArray(new String[STRING_ARRAY_SIZE]);
         }
+        Collections.shuffle(stringList, new Random(RAND_SEED));
+        return stringList.toArray(new String[STRING_ARRAY_SIZE]);
     }
 
     public static void main(String[] args) throws RunnerException {
